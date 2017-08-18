@@ -1,4 +1,5 @@
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -7,189 +8,124 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-public class VendedorasPremiadas {
-	
+public class VendedorasPremiadas extends EjercicioOIA {
+
 	static int cantidadVendedoras;
 	static int ventasConsecutivas;
-	
 	static int ganadora;
 	static int mayorImporte;
 	static int cantidadComparaciones;
-	
 	static List<Vendedora> vendedoras;
-	
+
 	public enum resultado {
 		GANADORA, EMPATE, NOGANADORA, ANALIZANDO
 	}
 	
-		
-	public static void procesarArchivo(String path) throws FileNotFoundException, IOException {
-				
-		FileReader file = new FileReader(path);
+	public VendedorasPremiadas(File entrada, File salida) throws FileNotFoundException, IOException {
+		super(entrada, salida);
+	}
+
+	private void procesarArchivo(File entrada) throws FileNotFoundException, IOException {
+		FileReader file = new FileReader(entrada);
 		Scanner scan = new Scanner(file);
 		
 		cantidadVendedoras = scan.nextInt();
-		
 		vendedoras = new ArrayList<Vendedora>();
 
 		for (int numeroVendedora = 0; numeroVendedora < cantidadVendedoras; numeroVendedora++) {
-			
 			Vendedora vendedora = new Vendedora(scan.nextInt(), numeroVendedora);
-						
-			for (int venta=0; venta < vendedora.getVentas(); venta++) {
-				
+			for (int venta = 0; venta < vendedora.getVentas(); venta++) {
 				vendedora.setImporteVenta(venta, scan.nextInt());
 			}
-			
 			vendedoras.add(vendedora);
 		}
-		
+
 		ventasConsecutivas = scan.nextInt();
-		
 		scan.close();
 	}
-	
-	public static resultado buscarGanadora() {
-		
+
+	private resultado buscarGanadora() {
 		mayorImporte = 0;
 		cantidadComparaciones = 1;
-		
 		resultado res = resultado.ANALIZANDO;
-		
+
 		while (res == resultado.ANALIZANDO) {
-			
-			for (Vendedora vendedora: vendedoras) {
-				
+			for (Vendedora vendedora : vendedoras) {
 				if (vendedora.compite(ventasConsecutivas)) {
-					
 					int importe = vendedora.mayorImporteVentasConsecutivas(ventasConsecutivas);
-					
 					if (importe > mayorImporte) {
-						
 						mayorImporte = importe;
 						ganadora = vendedora.getNumero();
 						res = resultado.GANADORA;
-					}
-					else if (importe == mayorImporte) {
-						
+					} else if (importe == mayorImporte) {
 						res = resultado.EMPATE;
 					}
 				}
 			}
-			
 			cantidadComparaciones++;
 			
 			if (res == resultado.GANADORA) {
-				
 				return res;
-			}
-			else if (res == resultado.ANALIZANDO) {
-				
+			} else if (res == resultado.ANALIZANDO) {
 				return resultado.NOGANADORA;
-			}
-			else {
-				
+			} else {
 				res = resultado.ANALIZANDO;
 				ventasConsecutivas++;
-				
 				if (!ContinuaCompetencia()) {
-					
 					break;
 				}
 			}
 		}
-		
 		return resultado.EMPATE;
 	}
-	
-	public static boolean ContinuaCompetencia() {
-		
+
+	private boolean ContinuaCompetencia() {
 		boolean competencia = false;
-		
-		for (Vendedora vendedora: vendedoras) {
-			
+		for (Vendedora vendedora : vendedoras) {
 			if (vendedora.compite(ventasConsecutivas)) {
-				
 				competencia = true;
 			}
 		}
-		
 		return competencia;
 	}
-	
-	public static void producirResultado(resultado miResultado, String path) throws FileNotFoundException, IOException {
+
+	private void producirResultado(resultado miResultado, File salida) throws FileNotFoundException, IOException {
 		
-		FileWriter file = new FileWriter(path);
+		FileWriter file = new FileWriter(salida);
 		BufferedWriter buffer = new BufferedWriter(file);
-		
+
 		if (miResultado == resultado.GANADORA) {
-			
 			buffer.write(Integer.toString(ganadora + 1));
 			buffer.newLine();
 			buffer.write(cantidadComparaciones + " " + mayorImporte);
 			salidaGanadora();
-		}
-		else if (miResultado == resultado.EMPATE) {
-			
+		} else if (miResultado == resultado.EMPATE) {
 			buffer.write("No se puede desempatar");
 			salidaEmpate();
-		}
-		else {
-			
+		} else {
 			buffer.write("No hay ganadoras");
 			salidaNoGanadora();
 		}
-		
 		buffer.close();
 	}
-	
-	public static void salidaGanadora() {
-		
+
+	private static void salidaGanadora() {
 		System.out.println(ganadora + 1);
 		System.out.println(cantidadComparaciones + " " + mayorImporte);
 	}
-	
-	public static void salidaEmpate() {
-		
+
+	private static void salidaEmpate() {
 		System.out.println("No se puede desempatar");
 	}
-	
-	public static void salidaNoGanadora() {
-		
+
+	private static void salidaNoGanadora() {
 		System.out.println("No hay ganadoras");
 	}
 	
-
-	public static void main(String[] args) {
-		
-		System.out.println("VENDEDORAS PREMIADAS");
-		
-		System.out.println("Ingrese nombre del archivo (sin extensión):");
-		
-		Scanner scan = new Scanner(System.in);
-		String archivo = scan.nextLine();
-		scan.close();
-		
-		try {
-			
-			procesarArchivo("../Lote de Prueba/Entrada/" + archivo + ".in");
-		}
-		catch (IOException e) {
-
-			System.out.println("Problema al abrir el archivo de entrada");
-			System.exit(0);
-		}
-		
+	@Override
+	public void resolver() throws FileNotFoundException, IOException {
+		this.procesarArchivo(entrada);
 		resultado resultado = buscarGanadora();
-				
-		try {
-			
-			producirResultado(resultado, "../Lote de Prueba/Salida Producida/" + archivo + ".out");
-		} 
-		catch (IOException e) {
-
-			System.out.println("Problema al abrir el archivo de texto");
-			System.exit(0);
-		}
+		this.producirResultado(resultado, salida);
 	}
 }
