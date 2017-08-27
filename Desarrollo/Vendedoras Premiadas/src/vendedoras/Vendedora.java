@@ -1,3 +1,4 @@
+package vendedoras;
 
 public class Vendedora {
 
